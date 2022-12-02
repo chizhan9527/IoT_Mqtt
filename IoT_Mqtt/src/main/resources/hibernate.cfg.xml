@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+    "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+  <session-factory>
+    <property name="connection.url">jdbc:mysql://123.60.110.3:3306/iot_mqtt</property>
+    <property name="connection.driver_class">com.mysql.cj.jdbc.Driver</property>
+    <property name="connection.username">IoT_Mqtt</property>
+    <property name="connection.password">zGPia7PFH76YtMGm</property>
+      <mapping class="com.project.iot_mqtt.Entity.ChinaEntity"/>
+    <mapping class="com.project.iot_mqtt.Entity.ForeignEntity"/>
+    <mapping class="com.project.iot_mqtt.Entity.TestEntity"/>
+    <!-- <property name="connection.username"/> -->
+    <!-- <property name="connection.password"/> -->
+
+    <!-- DB schema will be updated if needed -->
+    <!-- <property name="hibernate.hbm2ddl.auto">update</property> -->
+  </session-factory>
+</hibernate-configuration>

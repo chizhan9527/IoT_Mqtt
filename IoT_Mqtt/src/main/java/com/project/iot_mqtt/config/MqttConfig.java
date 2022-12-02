@@ -1,7 +1,10 @@
 package com.project.iot_mqtt.config;
 
+import com.project.iot_mqtt.Entity.MyMessage;
+import com.project.iot_mqtt.Entity.TestEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.integration.annotation.ServiceActivator;
@@ -17,13 +20,15 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.MessagingException;
-
+import com.project.iot_mqtt.service.testService;
 import java.util.logging.Logger;
 
 @Configuration
 @Slf4j
 public class MqttConfig {
 
+    @Autowired
+    private testService testService;
     private final String clientId = "mqtt_114514";
     /**
      * 1、先创建连接
@@ -95,6 +100,10 @@ public class MqttConfig {
                     String topic = message.getHeaders().get("mqtt_receivedTopic").toString();
                     String qos = message.getHeaders().get("mqtt_receivedQos").toString();
                     String payload = message.getPayload().toString();
+                    TestEntity testEntity = new TestEntity();
+                    testEntity.setTopic(topic);
+                    testEntity.setMessage(payload);
+                    testService.addTest(testEntity);
                     log.info("主题: "+topic);
                     log.info("内容："+payload);
                     log.info("级别："+qos);
