@@ -143,7 +143,7 @@ public class MqttController {
 
         //MyMessage myMessage1 = new MyMessage("/topic","test");
         // 发送消息到指定主题
-        mqttGateway.sendToMqtt(myMessage.getTopic(), 1, myMessage.getContent());
+        //qttGateway.sendToMqtt(myMessage.getTopic(), 1, myMessage.getContent());
 
         return myMessage;
 /*        Nation nation = nationMapper.getNation(10);
