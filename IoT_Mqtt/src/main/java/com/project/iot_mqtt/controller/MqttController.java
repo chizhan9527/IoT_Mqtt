@@ -43,7 +43,7 @@ public class MqttController {
         Date date = fmt.parse(time);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        calendar.add(Calendar.DAY_OF_MONTH,length);
+        calendar.add(Calendar.DAY_OF_MONTH,length-1);
         Date date1 = calendar.getTime();
 
         if(cityName!=null) {
@@ -127,7 +127,7 @@ public class MqttController {
         Date date = fmt.parse(time);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        calendar.add(Calendar.DAY_OF_MONTH,length);
+        calendar.add(Calendar.DAY_OF_MONTH,length-1);
         Date date1 = calendar.getTime();
 
 
