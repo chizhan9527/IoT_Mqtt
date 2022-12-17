@@ -10,7 +10,7 @@ public interface MqttGateway {
     void sendToMqtt(String payload);
     // 指定topic进行消息发送
     void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, String payload);
-    void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.QOS) int qos, String payload);
+    void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.QOS) int qos, Object payload);
     void sendToMqtt(@Header(MqttHeaders.TOPIC) String topic, @Header(MqttHeaders.QOS) int qos, byte[] payload);
 }
 
