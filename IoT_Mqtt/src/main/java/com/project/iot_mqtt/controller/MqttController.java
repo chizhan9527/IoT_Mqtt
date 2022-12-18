@@ -39,32 +39,96 @@ public class MqttController {
         String countryName = dto.getCountryName();
         Integer length = dto.getLength();
 
-        DateFormat fmt =new SimpleDateFormat("yyyy-MM-dd");
-        Date date = fmt.parse(time);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        calendar.add(Calendar.DAY_OF_MONTH,length-1);
-        Date date1 = calendar.getTime();
+        if(length!=0) {
+            DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = fmt.parse(time);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.DAY_OF_MONTH, length - 1);
+            Date date1 = calendar.getTime();
 
-        if(cityName!=null) {
             LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(China::getProvinceName, provinceName);
-            queryWrapper.eq(China::getCityName, cityName);
-            queryWrapper.between(China::getUpdateTime, date, date1);
-            List<China> chains = chinaMapper.selectList(queryWrapper);
-            List<VO> voList = copyChinaList(chains);
-            return MyMessage.success(voList);
+            if (cityName != null) {
+                queryWrapper.eq(China::getCityName, cityName);
+                queryWrapper.between(China::getUpdateTime, date, date1);
+                List<China> chains = chinaMapper.selectList(queryWrapper);
+                List<VO> voList = copyChinaList(chains);
+                return MyMessage.success(voList);
+            } else {
+                queryWrapper.between(China::getUpdateTime, date, date1);
+                List<China> chains = chinaMapper.selectList(queryWrapper);
+                List<VO> voList = copyChinaList2(chains);
+                List<VO> voList1 = removeDuplicate(voList);
+                return MyMessage.success(voList1);
+            }
         }
         else{
-            LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.eq(China::getProvinceName, provinceName);
-            queryWrapper.between(China::getUpdateTime, date, date1);
-            List<China> chains = chinaMapper.selectList(queryWrapper);
-            List<VO> voList = copyChinaList2(chains);
-            List<VO> voList1 = removeDuplicate(voList);
+            String time1 = "2021-01-01";
+            if(Objects.equals(time, "2020")){
+                time = "2020-01-01";
+            } else if (Objects.equals(time, "2021")) {
+                time = "2021-01-01";
+                time1="2022-01-01";
+            }
+            DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = fmt.parse(time);
+            Date test = fmt.parse(time1);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.MONTH, 1);
+            Date date1 = calendar.getTime();
 
-            return MyMessage.success(voList1);
+            List<China> chinaList = new ArrayList<>();
+
+            if (cityName != null) {
+                while (true) {
+                    LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(China::getProvinceName, provinceName);
+                    queryWrapper.eq(China::getCityName, cityName);
+                    queryWrapper.between(China::getUpdateTime, date, date1);
+                    queryWrapper.last("limit 1");
+                    China china = chinaMapper.selectOne(queryWrapper);
+                    if (china != null) {
+                        chinaList.add(china);
+                    }
+                    calendar.setTime(date);
+                    calendar.add(Calendar.MONTH, 1);
+                    date = calendar.getTime();
+                    calendar.setTime(date1);
+                    calendar.add(Calendar.MONTH, 1);
+                    date1 = calendar.getTime();
+                    if(date.equals(test))
+                        break;
+                }
+                List<VO> voList = copyChinaList(chinaList);
+                return MyMessage.success(voList);
+            } else {
+                while (true) {
+                    LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(China::getProvinceName, provinceName);
+                    queryWrapper.between(China::getUpdateTime, date, date1);
+                    queryWrapper.last("limit 1");
+                    China china = chinaMapper.selectOne(queryWrapper);
+                    if(china!=null){
+                        chinaList.add(china);
+                    }
+                    calendar.setTime(date);
+                    calendar.add(Calendar.MONTH, 1);
+                    date = calendar.getTime();
+                    calendar.setTime(date1);
+                    calendar.add(Calendar.MONTH, 1);
+                    date1 = calendar.getTime();
+                    if(date.equals(test))
+                        break;
+                }
+                List<VO> voList = copyChinaList2(chinaList);
+                List<VO> voList1 = removeDuplicate(voList);
+                return MyMessage.success(voList1);
+            }
         }
+
+
     }
 
     private List<VO> removeDuplicate(List<VO> voList) {
@@ -122,30 +186,71 @@ public class MqttController {
         String countryName = dto.getCountryName();
         Integer length = dto.getLength();
 
+        if(length!=0) {
+            DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = fmt.parse(time);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.DAY_OF_MONTH, length - 1);
+            Date date1 = calendar.getTime();
 
-        DateFormat fmt =new SimpleDateFormat("yyyy-MM-dd");
-        Date date = fmt.parse(time);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        calendar.add(Calendar.DAY_OF_MONTH,length-1);
-        Date date1 = calendar.getTime();
 
+            LambdaQueryWrapper<Nation> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(Nation::getCountryName, countryName);
+            queryWrapper.between(Nation::getUpdateTime, date, date1);
+            List<Nation> nations = nationMapper.selectList(queryWrapper);
 
-        LambdaQueryWrapper<Nation> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Nation::getCountryName,countryName);
-        queryWrapper.between(Nation::getUpdateTime,date,date1);
-        List<Nation> nations = nationMapper.selectList(queryWrapper);
+            List<VO> voList = new ArrayList<>();
+            voList = this.copyList(nations);
 
-        List<VO> voList = new ArrayList<>();
-        voList = this.copyList(nations);
+            MyMessage myMessage = MyMessage.success(voList);
 
-        MyMessage myMessage = MyMessage.success(voList);
+            //MyMessage myMessage1 = new MyMessage("/topic","test");
+            // 发送消息到指定主题
+            //qttGateway.sendToMqtt(myMessage.getTopic(), 1, myMessage.getContent());
 
-        //MyMessage myMessage1 = new MyMessage("/topic","test");
-        // 发送消息到指定主题
-        //qttGateway.sendToMqtt(myMessage.getTopic(), 1, myMessage.getContent());
+            return myMessage;
+        }
+        else{
+            String time1 = "2021-01-01";
+            if(Objects.equals(time, "2020")){
+                time = "2020-01-01";
+            } else if (Objects.equals(time, "2021")) {
+                time = "2021-01-01";
+                time1="2022-01-01";
+            }
+            DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+            Date date = fmt.parse(time);
+            Date test = fmt.parse(time1);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(date);
+            calendar.add(Calendar.MONTH, 1);
+            Date date1 = calendar.getTime();
 
-        return myMessage;
+            List<Nation> nations = new ArrayList<>();
+
+            while (true) {
+                LambdaQueryWrapper<Nation> queryWrapper = new LambdaQueryWrapper<>();
+                queryWrapper.eq(Nation::getCountryName, countryName);
+                queryWrapper.between(Nation::getUpdateTime, date,date1);
+                queryWrapper.last("limit 1");
+                Nation nation = nationMapper.selectOne(queryWrapper);
+                if(nation!=null){
+                    nations.add(nation);
+                }
+                calendar.setTime(date);
+                calendar.add(Calendar.MONTH, 1);
+                date = calendar.getTime();
+                calendar.setTime(date1);
+                calendar.add(Calendar.MONTH, 1);
+                date1 = calendar.getTime();
+                if(date.equals(test))
+                    break;
+            }
+            List<VO> voList = copyList(nations);
+            return MyMessage.success(voList);
+
+        }
 /*        Nation nation = nationMapper.getNation(10);
         MyMessage myMessage = MyMessage.success(nation);
         return myMessage;*/
