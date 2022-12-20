@@ -299,7 +299,9 @@ public class MqttController {
         dto.setProvinceName(null);
         dto.setCityName(null);
         // 这里可能需要改一下，前端需求先假设是按照2021年预测2022年的每个月。
-        if (dto.getTime() == "2022") {dto.setTime("2021");}
+        if (Objects.equals(dto.getTime(), "2022")) {
+            dto.setTime("2021");
+        }
         String countryName = dto.getCountryName();
 
         MyMessage message = this.send(dto);
