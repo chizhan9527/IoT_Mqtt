@@ -1,15 +1,23 @@
 package com.project.iot_mqtt.controller;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.project.iot_mqtt.Entity.*;
 import com.project.iot_mqtt.config.MqttConfig;
 import com.project.iot_mqtt.mapper.ChinaMapper;
 import com.project.iot_mqtt.mapper.NationMapper;
+import com.project.iot_mqtt.service.ForecastService;
 import com.project.iot_mqtt.service.MqttGateway;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.io.*;
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -39,7 +47,7 @@ public class MqttController {
         String countryName = dto.getCountryName();
         Integer length = dto.getLength();
 
-        if(length!=0) {
+        if (length != 0) {
             DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
             Date date = fmt.parse(time);
             Calendar calendar = Calendar.getInstance();
@@ -62,14 +70,13 @@ public class MqttController {
                 List<VO> voList1 = removeDuplicate(voList);
                 return MyMessage.success(voList1);
             }
-        }
-        else{
+        } else {
             String time1 = "2021-01-01";
-            if(Objects.equals(time, "2020")){
+            if (Objects.equals(time, "2020")) {
                 time = "2020-01-01";
             } else if (Objects.equals(time, "2021")) {
                 time = "2021-01-01";
-                time1="2022-01-01";
+                time1 = "2022-01-01";
             }
             DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
             Date date = fmt.parse(time);
@@ -98,7 +105,7 @@ public class MqttController {
                     calendar.setTime(date1);
                     calendar.add(Calendar.MONTH, 1);
                     date1 = calendar.getTime();
-                    if(date.equals(test))
+                    if (date.equals(test))
                         break;
                 }
                 List<VO> voList = copyChinaList(chinaList);
@@ -110,7 +117,7 @@ public class MqttController {
                     queryWrapper.between(China::getUpdateTime, date, date1);
                     queryWrapper.last("limit 1");
                     China china = chinaMapper.selectOne(queryWrapper);
-                    if(china!=null){
+                    if (china != null) {
                         chinaList.add(china);
                     }
                     calendar.setTime(date);
@@ -119,7 +126,7 @@ public class MqttController {
                     calendar.setTime(date1);
                     calendar.add(Calendar.MONTH, 1);
                     date1 = calendar.getTime();
-                    if(date.equals(test))
+                    if (date.equals(test))
                         break;
                 }
                 List<VO> voList = copyChinaList2(chinaList);
@@ -132,9 +139,9 @@ public class MqttController {
     }
 
     private List<VO> removeDuplicate(List<VO> voList) {
-        for  ( int  i  =   0 ; i  <  voList.size()  -   1 ; i ++ )  {
-            for  ( int  j  =  voList.size()  -   1 ; j  >  i; j -- )  {
-                if  (voList.get(j).getTime().equals(voList.get(i).getTime()))  {
+        for (int i = 0; i < voList.size() - 1; i++) {
+            for (int j = voList.size() - 1; j > i; j--) {
+                if (voList.get(j).getTime().equals(voList.get(i).getTime())) {
                     voList.remove(j);
                 }
             }
@@ -186,7 +193,7 @@ public class MqttController {
         String countryName = dto.getCountryName();
         Integer length = dto.getLength();
 
-        if(length!=0) {
+        if (length != 0) {
             DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
             Date date = fmt.parse(time);
             Calendar calendar = Calendar.getInstance();
@@ -210,14 +217,13 @@ public class MqttController {
             //qttGateway.sendToMqtt(myMessage.getTopic(), 1, myMessage.getContent());
 
             return myMessage;
-        }
-        else{
+        } else {
             String time1 = "2021-01-01";
-            if(Objects.equals(time, "2020")){
+            if (Objects.equals(time, "2020")) {
                 time = "2020-01-01";
             } else if (Objects.equals(time, "2021")) {
                 time = "2021-01-01";
-                time1="2022-01-01";
+                time1 = "2022-01-01";
             }
             DateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
             Date date = fmt.parse(time);
@@ -232,10 +238,10 @@ public class MqttController {
             while (true) {
                 LambdaQueryWrapper<Nation> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(Nation::getCountryName, countryName);
-                queryWrapper.between(Nation::getUpdateTime, date,date1);
+                queryWrapper.between(Nation::getUpdateTime, date, date1);
                 queryWrapper.last("limit 1");
                 Nation nation = nationMapper.selectOne(queryWrapper);
-                if(nation!=null){
+                if (nation != null) {
                     nations.add(nation);
                 }
                 calendar.setTime(date);
@@ -244,7 +250,7 @@ public class MqttController {
                 calendar.setTime(date1);
                 calendar.add(Calendar.MONTH, 1);
                 date1 = calendar.getTime();
-                if(date.equals(test))
+                if (date.equals(test))
                     break;
             }
             List<VO> voList = copyList(nations);
@@ -277,10 +283,63 @@ public class MqttController {
     }
 
     @PutMapping("/topic")
-    public String addTopic(@RequestParam("topic")String topic){
-        mqttConfig.mqttSubscriber().addTopic(topic,1);
+    public String addTopic(@RequestParam("topic") String topic) {
+        mqttConfig.mqttSubscriber().addTopic(topic, 1);
         return "ok";
     }
 
+
+    //---------------------------------------- forecast---------------------------------------- //
+
+
+    @PostMapping("/forecast/getCountryForecast")
+    public MyMessage getCountryForecast(@RequestBody DTO dto) throws ParseException {
+        ForecastService forecastService = new ForecastService();
+        dto.setLength(0);
+        dto.setProvinceName(null);
+        dto.setCityName(null);
+        // 这里可能需要改一下，前端需求先假设是按照2021年预测2022年的每个月。
+        //dto.setTime("2021");
+        String countryName = dto.getCountryName();
+
+        MyMessage message = this.send(dto);
+        Object data = message.getContent();
+        List<Map<String, Integer>> resultList = new ArrayList<>();
+        if (null != data) {
+            // 转换类型，否则不好使用List相关方法
+            List<VO> data1 = (List<VO>) data;
+            // 12个月对应的确诊、治愈、死亡数字
+            ArrayList<Integer> conformCounts = new ArrayList<>();
+            ArrayList<Integer> curedCounts = new ArrayList<>();
+            ArrayList<Integer> deadCounts = new ArrayList<>();
+            // 从将send中获取的数据添加在对应的List中
+            for (VO vo : data1) {
+                conformCounts.add(vo.getConformCount());
+                curedCounts.add(vo.getCuredCount());
+                deadCounts.add(vo.getDeadCount());
+            }
+
+            JSONArray conformForeJsonArray = forecastService.forecast(conformCounts, 12, "conformData");
+            JSONArray curedForeJsonArray = forecastService.forecast(curedCounts, 12, "curedData");
+            JSONArray deadForeJsonArray = forecastService.forecast(deadCounts, 12, "deadData");
+
+            List<BigDecimal> conformForeList = JSONObject.parseArray(conformForeJsonArray.toJSONString());
+            List<BigDecimal> curedeForeList = JSONObject.parseArray(curedForeJsonArray.toJSONString());
+            List<BigDecimal> deadForeList = JSONObject.parseArray(deadForeJsonArray.toJSONString());
+
+
+            for (int i = 0; i < conformForeList.size(); i++) {
+                Map<String, Integer> map = new HashMap<>();
+                map.put("deadForecast", deadForeList.get(i).intValue());
+                map.put("cureForecast", curedeForeList.get(i).intValue());
+                map.put("conformForecast", conformForeList.get(i).intValue());
+                resultList.add(map);
+            }
+        } else {
+            return null;
+        }
+
+        return MyMessage.success(resultList);
+    }
 }
 

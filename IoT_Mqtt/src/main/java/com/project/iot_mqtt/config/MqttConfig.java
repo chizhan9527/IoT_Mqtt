@@ -66,7 +66,7 @@ public class MqttConfig {
     @Bean
     public MqttPahoMessageDrivenChannelAdapter mqttSubscriber() {
         String [] topics = new String[]{"publish", "test/", "test"};
-        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId+"_subscribe",
+        MqttPahoMessageDrivenChannelAdapter adapter = new MqttPahoMessageDrivenChannelAdapter(clientId+"_mysubscribe",
                 mqttClientFactory(), topics);
         adapter.setCompletionTimeout(5000);
         // Paho消息转换器
@@ -134,7 +134,7 @@ public class MqttConfig {
     @ServiceActivator(inputChannel = "mqttOutboundChannel")
     public MessageHandler outbound() {
         // 发送消息和消费消息Channel可以使用相同MqttPahoClientFactory
-        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler(clientId+"_publish", mqttClientFactory());
+        MqttPahoMessageHandler messageHandler = new MqttPahoMessageHandler(clientId+"_mypublish", mqttClientFactory());
         messageHandler.setAsync(true); // 如果设置成true，即异步，发送消息时将不会阻塞。
         messageHandler.setDefaultTopic("command");
         messageHandler.setDefaultQos(1); // 设置默认QoS
