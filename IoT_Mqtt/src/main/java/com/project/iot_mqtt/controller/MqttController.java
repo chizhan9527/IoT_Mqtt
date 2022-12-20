@@ -340,8 +340,8 @@ public class MqttController {
         } else {
             return null;
         }
-
-        return MyMessage.success(resultList);
+        addTopic("forecast/");
+        return MyMessage.success("forecast/", resultList);
     }
 }
 
