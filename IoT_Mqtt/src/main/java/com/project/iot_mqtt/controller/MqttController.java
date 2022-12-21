@@ -340,7 +340,57 @@ public class MqttController {
         } else {
             return null;
         }
-        addTopic("forecast/");
+        //addTopic("forecast/");
+        return MyMessage.success("forecast/", resultList);
+    }
+
+    @PostMapping("/forecast/getProvinceForecast")
+    public MyMessage getProvinceForecast(@RequestBody DTO dto) throws ParseException {
+        ForecastService forecastService = new ForecastService();
+        dto.setLength(0);
+        // 这里可能需要改一下，前端需求先假设是按照2021年预测2022年的每个月。
+        if (Objects.equals(dto.getTime(), "2022")) {
+            dto.setTime("2021");
+        }
+        String countryName = dto.getCountryName();
+
+        MyMessage message = this.sendTOChina(dto);
+        Object data = message.getContent();
+        List<Map<String, Integer>> resultList = new ArrayList<>();
+        if (null != data) {
+            // 转换类型，否则不好使用List相关方法
+            List<VO> data1 = (List<VO>) data;
+            // 12个月对应的确诊、治愈、死亡数字
+            ArrayList<Integer> conformCounts = new ArrayList<>();
+            ArrayList<Integer> curedCounts = new ArrayList<>();
+            ArrayList<Integer> deadCounts = new ArrayList<>();
+            // 从将send中获取的数据添加在对应的List中
+            for (VO vo : data1) {
+                conformCounts.add(vo.getConformCount());
+                curedCounts.add(vo.getCuredCount());
+                deadCounts.add(vo.getDeadCount());
+            }
+
+            JSONArray conformForeJsonArray = forecastService.forecast(conformCounts, 12, "conformData");
+            JSONArray curedForeJsonArray = forecastService.forecast(curedCounts, 12, "curedData");
+            JSONArray deadForeJsonArray = forecastService.forecast(deadCounts, 12, "deadData");
+
+            List<BigDecimal> conformForeList = JSONObject.parseArray(conformForeJsonArray.toJSONString());
+            List<BigDecimal> curedeForeList = JSONObject.parseArray(curedForeJsonArray.toJSONString());
+            List<BigDecimal> deadForeList = JSONObject.parseArray(deadForeJsonArray.toJSONString());
+
+
+            for (int i = 0; i < conformForeList.size(); i++) {
+                Map<String, Integer> map = new HashMap<>();
+                map.put("deadForecast", deadForeList.get(i).intValue());
+                map.put("cureForecast", curedeForeList.get(i).intValue());
+                map.put("conformForecast", conformForeList.get(i).intValue());
+                resultList.add(map);
+            }
+        } else {
+            return null;
+        }
+        //addTopic("forecast/");
         return MyMessage.success("forecast/", resultList);
     }
 }
