@@ -29,7 +29,7 @@ public class MqttConfig {
 
     @Autowired
     private testService testService;
-    private final String clientId = "mqtt_114514";
+    private final String clientId = "mqtt_114789";
     /**
      * 1、先创建连接
      * 创建MqttPahoClientFactory，设置MQTT Broker连接属性，如果使用SSL验证，也在这里设置。
