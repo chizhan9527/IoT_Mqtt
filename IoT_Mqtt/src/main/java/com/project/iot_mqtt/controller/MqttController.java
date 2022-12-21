@@ -58,7 +58,7 @@ public class MqttController {
             LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(China::getProvinceName, provinceName);
             if (cityName != null) {
-                queryWrapper.eq(China::getCityName, cityName);
+                queryWrapper.like(China::getCityName, cityName);
                 queryWrapper.between(China::getUpdateTime, date, date1);
                 List<China> chains = chinaMapper.selectList(queryWrapper);
                 List<VO> voList = copyChinaList(chains);
@@ -91,8 +91,8 @@ public class MqttController {
             if (cityName != null) {
                 while (true) {
                     LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
-                    queryWrapper.eq(China::getProvinceName, provinceName);
-                    queryWrapper.eq(China::getCityName, cityName);
+                    queryWrapper.like(China::getProvinceName, provinceName);
+                    queryWrapper.like(China::getCityName, cityName);
                     queryWrapper.between(China::getUpdateTime, date, date1);
                     queryWrapper.last("limit 1");
                     China china = chinaMapper.selectOne(queryWrapper);
@@ -109,7 +109,7 @@ public class MqttController {
                         break;
                 }
                 List<VO> voList = copyChinaList(chinaList);
-                return MyMessage.success(voList);
+                return MyMessage.success("year/",voList);
             } else {
                 while (true) {
                     LambdaQueryWrapper<China> queryWrapper = new LambdaQueryWrapper<>();
@@ -131,7 +131,7 @@ public class MqttController {
                 }
                 List<VO> voList = copyChinaList2(chinaList);
                 List<VO> voList1 = removeDuplicate(voList);
-                return MyMessage.success(voList1);
+                return MyMessage.success("year/",voList1);
             }
         }
 
